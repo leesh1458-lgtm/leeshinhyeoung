@@ -128,7 +128,10 @@ let currentYear = new Date().getFullYear();
 let selectedDateKey = ''; // 'YYYY-MM-DD' 형식의 현재 선택된 날짜 키
 
 const calendarGrid = document.getElementById('calendar-grid');
-const currentMonthYear = document.getElementById('current-month-year');
+// 미니멀 디자인의 새로운 ID 사용
+const currentYearDisplay = document.getElementById('current-year'); 
+const currentMonthDisplay = document.getElementById('current-month'); 
+
 const prevMonthBtn = document.getElementById('prev-month');
 const nextMonthBtn = document.getElementById('next-month');
 
@@ -139,18 +142,13 @@ const modalQtInput = document.getElementById('modal-qt-input');
 const modalSaveQtBtn = document.getElementById('modal-save-qt');
 const modalReadView = document.getElementById('modal-read-view');
 const modalInputArea = document.getElementById('modal-input-area');
-// .close-button은 HTML의 모달 닫기 버튼의 클래스입니다.
 const closeButton = document.querySelector('.close-button'); 
 
 
 // --- 2. 데이터 관리 함수 (키: 'qtDiaryData_QT' 사용) ---
 
-/**
- * localStorage에서 모든 QT 데이터를 불러옵니다. (키: 'qtDiaryData_QT')
- */
 function loadQtData() {
     try {
-        // 운동 다이어리와 충돌을 피하기 위해 전용 키를 사용합니다.
         const data = localStorage.getItem('qtDiaryData_QT'); 
         return data ? JSON.parse(data) : {};
     } catch (e) {
@@ -159,10 +157,6 @@ function loadQtData() {
     }
 }
 
-/**
- * QT 데이터를 localStorage에 저장합니다. (키: 'qtDiaryData_QT')
- * @param {object} data - 저장할 QT 데이터 객체
- */
 function saveQtData(data) {
     try {
         localStorage.setItem('qtDiaryData_QT', JSON.stringify(data));
@@ -173,28 +167,9 @@ function saveQtData(data) {
 
 // --- 3. 캘린더 및 랜덤 QT 생성 함수 ---
 
-/**
- * 랜덤으로 QT 말씀을 선택하여 반환합니다.
- */
 function getRandomVerse() {
     const randomIndex = Math.floor(Math.random() * qtVerses.length);
     return qtVerses[randomIndex];
-}
-
-/**
- * 캘린더 헤더에 요일 이름을 생성합니다 (Su, Mo, Tu...)
- */
-function renderDayNames() {
-    const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']; 
-    // 그리드 초기화 (날짜 셀과 요일 이름을 모두 지웁니다)
-    calendarGrid.innerHTML = ''; 
-    
-    dayNames.forEach(day => {
-        const dayElement = document.createElement('div');
-        dayElement.textContent = day;
-        dayElement.classList.add('day-name');
-        calendarGrid.appendChild(dayElement);
-    });
 }
 
 /**
@@ -207,6 +182,17 @@ function renderCalendar() {
     const currentMonth_ = today.getMonth();
     const currentYear_ = today.getFullYear();
     
+    // 🌟🌟🌟 [핵심 수정 부분]: 미니멀 디자인 HTML 요소에 월/연도 표시 🌟🌟🌟
+    const monthNames = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
+    
+    // left-info 영역의 연도와 월을 업데이트
+    if (currentYearDisplay) {
+        currentYearDisplay.textContent = currentYear; 
+    }
+    if (currentMonthDisplay) {
+        currentMonthDisplay.textContent = monthNames[currentMonth]; 
+    }
+    
     // 캘린더를 새로 그릴 때마다 요일 이름(7개)을 제외한 날짜 셀만 지웁니다.
     const dayNameCount = 7;
     while (calendarGrid.children.length > dayNameCount) {
@@ -217,10 +203,6 @@ function renderCalendar() {
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay(); 
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate(); 
     
-    // 월/년도 표시
-    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    currentMonthYear.textContent = `${monthNames[currentMonth]} ${currentYear}`; 
-
     // 1. 공백 채우기
     for (let i = 0; i < firstDayOfMonth; i++) {
         const emptyCell = document.createElement('div');
@@ -234,7 +216,7 @@ function renderCalendar() {
         cell.classList.add('date-cell');
         cell.textContent = day;
         
-        // 날짜 키 생성: 'YYYY-MM-DD'
+        // 날짜 키 생성: 'YYYY-MM-DD' (월/일은 2자리로 패딩)
         const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         cell.dataset.dateKey = dateKey;
 
@@ -257,7 +239,6 @@ function renderCalendar() {
         }
     }
     
-    // 캘린더 렌더링 후, 선택된 날짜가 있다면 스타일 적용
     if (initialSelectedCell) {
         initialSelectedCell.classList.add('selected');
     }
@@ -270,7 +251,13 @@ function renderCalendar() {
  */
 function closeModal() {
     qtModal.style.display = "none";
-    // 캘린더 상태를 업데이트하여 변경 사항 반영
+    
+    // 모달 닫을 때 선택된 날짜의 'selected' 클래스 제거
+    const prevSelectedCell = document.querySelector('.date-cell.selected');
+    if (prevSelectedCell) {
+        prevSelectedCell.classList.remove('selected');
+    }
+    selectedDateKey = ''; // 선택된 날짜 키 초기화
     renderCalendar();
 }
 
@@ -313,20 +300,32 @@ function updateDiarySection(dateKey) {
     // 모달 헤더에 날짜 표시
     modalDateDisplay.textContent = `${parseInt(month)}월 ${parseInt(day)}일 (${dayOfWeek}) QT 기록`;
 
-    // 1. 기록이 이미 있는 경우 (읽기/편집 모드)
+    // 1. 기록이 이미 있는 경우 (읽기 모드)
     if (qtContent) {
-        // 읽기 뷰 표시
         modalInputArea.style.display = 'none';
         modalReadView.style.display = 'block';
-        modalReadView.textContent = qtContent;
+        modalReadView.innerHTML = qtContent.replace(/\n/g, '<br>'); // 줄 바꿈 HTML 적용
         
         // 텍스트 영역에는 편집을 위해 내용을 채워둠
         modalQtInput.value = qtContent; 
         
+        // 버튼을 '편집' 모드로 전환
+        modalSaveQtBtn.textContent = "편집";
+        modalSaveQtBtn.onclick = () => {
+            // '편집'을 누르면 입력 모드로 전환
+            modalInputArea.style.display = 'block';
+            modalReadView.style.display = 'none';
+            modalSaveQtBtn.textContent = "저장";
+            modalSaveQtBtn.onclick = handleModalSave; // 저장 버튼 액션 복구
+            modalQtInput.focus();
+        };
+
     } else {
         // 2. 기록이 없는 경우 (입력 모드 + 랜덤 말씀 생성)
         modalInputArea.style.display = 'block';
         modalReadView.style.display = 'none';
+        modalSaveQtBtn.textContent = "저장";
+        modalSaveQtBtn.onclick = handleModalSave; // 저장 버튼 액션 설정
         
         // --- 랜덤 QT 말씀 생성 템플릿 ---
         const verseData = getRandomVerse();
@@ -348,12 +347,8 @@ function updateDiarySection(dateKey) {
 
         modalQtInput.value = defaultTemplate; // 템플릿으로 입력 필드 채우기
     }
-    
-    // 이전에 저장된 내용이 있을 경우, 편집을 위해 텍스트 입력창에 내용을 미리 채워둠
-    if (qtContent) {
-        modalQtInput.value = qtContent;
-    }
 }
+
 
 /**
  * 모달 내부의 '저장' 버튼을 처리합니다.
@@ -388,15 +383,7 @@ function changeMonth(delta) {
         currentYear--;
     }
     
-    // 월 변경 시 선택된 날짜를 초기화하거나 오늘 날짜로 재설정
-    const today = new Date();
-    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
-    if (currentYear === today.getFullYear() && currentMonth === today.getMonth()) {
-        selectedDateKey = todayKey; 
-    } else {
-        selectedDateKey = ''; // 다른 월을 볼 때는 선택 해제
-    }
+    selectedDateKey = ''; 
 
     renderCalendar();
 }
@@ -404,7 +391,6 @@ function changeMonth(delta) {
 // --- 5. 초기화 및 이벤트 리스너 설정 ---
 
 function init() {
-    renderDayNames();
     
     // 초기 렌더링 시 오늘 날짜를 선택된 날짜로 설정
     const today = new Date();
@@ -417,7 +403,8 @@ function init() {
     nextMonthBtn.addEventListener('click', () => changeMonth(1));
 
     // 모달 관련 이벤트 리스너 연결
-    modalSaveQtBtn.addEventListener('click', handleModalSave);
+    // 초기에는 '저장' 액션으로 설정
+    modalSaveQtBtn.addEventListener('click', handleModalSave); 
     closeButton.addEventListener('click', closeModal);
     
     // 모달 외부 클릭 시 닫기
