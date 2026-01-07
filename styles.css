@@ -17,8 +17,8 @@ body {
 
 #app-container {
     /* 화면 폭에 최대한 유연하게 대응하도록 설정 */
-    width: 95%; 
-    max-width: 750px; /* PC/태블릿에서 너무 넓어지는 것을 방지 */
+    width: 98%; 
+    max-width: 900px; /* PC/태블릿에서 너무 넓어지는 것을 방지 */
     margin: 20px auto; 
     padding: 20px;
     background-color: #fff;
@@ -138,5 +138,18 @@ body {
     line-height: 1.6; /* 줄 간격 확보 */
     resize: vertical;
 }
+@media (max-width: 900px) { 
+    #app-container {
+        width: 98%; /* 좁은 화면에서도 화면의 98% 사용 */
+        margin: 10px auto;
+    }
+    /* 모달도 넓게 보이도록 설정 */
+    .modal-content {
+        width: 95%;
+        max-width: 550px;
+        margin: 5% auto; 
+    }
+}
 
 /* ... 나머지 스타일 유지 ... */
+
